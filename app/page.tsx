@@ -146,7 +146,10 @@ export default function Home() {
   useEffect(() => {
     const normalizedLocale = navigator.language.toLowerCase();
     const usesTaiwanTraditionalChinese = normalizedLocale === "zh-tw" || normalizedLocale === "zh-hant-tw";
-    setLanguage(usesTaiwanTraditionalChinese ? "zh" : "en");
+    const localeFrame = requestAnimationFrame(() => {
+      setLanguage(usesTaiwanTraditionalChinese ? "zh" : "en");
+    });
+    return () => cancelAnimationFrame(localeFrame);
   }, []);
 
   useEffect(() => {
@@ -178,11 +181,13 @@ export default function Home() {
     };
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
     return () => {
       window.clearTimeout(controlsIn);
       window.clearTimeout(contentIn);
       window.clearTimeout(introDone);
       window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
       if (raf.current !== null) cancelAnimationFrame(raf.current);
     };
   }, []);
@@ -214,6 +219,12 @@ export default function Home() {
       const isMobile = window.innerWidth < 700;
       const sampleWidth = isMobile ? 420 : 680;
       const sampleHeight = Math.round(sampleWidth * (image.naturalHeight / image.naturalWidth));
+      const portraitScale = Math.min(bounds.width / sampleWidth, bounds.height / sampleHeight);
+      const portraitWidth = sampleWidth * portraitScale;
+      const portraitHeight = sampleHeight * portraitScale;
+      const portraitOffsetX = (bounds.width - portraitWidth) * 0.5;
+      const portraitOffsetY = (bounds.height - portraitHeight) * 0.5;
+      const grainScale = Math.max(0.72, Math.min(1.45, portraitHeight / 900));
       const sampleCanvas = document.createElement("canvas");
       sampleCanvas.width = sampleWidth;
       sampleCanvas.height = sampleHeight;
@@ -225,8 +236,9 @@ export default function Home() {
       const upperBodyCandidates: SandParticle[] = [];
       const lowerBodyCandidates: SandParticle[] = [];
       const faceCandidates: SandParticle[] = [];
-      const centerX = bounds.width * 0.5;
-      const centerY = bounds.height * 0.5;
+      const centerX = portraitOffsetX + portraitWidth * 0.5;
+      const centerY = portraitOffsetY + portraitHeight * 0.5;
+      const portraitRadius = Math.hypot(portraitWidth, portraitHeight) * 0.43;
       const maxUpperBodyParticles = isMobile ? 3800 : 12000;
       const maxLowerBodyParticles = isMobile ? 3200 : 8500;
       const maxFaceParticles = isMobile ? 6200 : 14000;
@@ -247,10 +259,10 @@ export default function Home() {
           const samplingChance = Math.min(0.995, Math.max(samplingFloor, brightness / samplingDivisor));
           if (brightness < (isFaceZone ? 3 : 5) || Math.random() > samplingChance) continue;
 
-          const targetX = normalizedX * bounds.width;
-          const targetY = normalizedY * bounds.height;
+          const targetX = portraitOffsetX + normalizedX * portraitWidth;
+          const targetY = portraitOffsetY + normalizedY * portraitHeight;
           const distanceFromCenter = Math.hypot(targetX - centerX, targetY - centerY);
-          const targetDepth = Math.min(1, distanceFromCenter / (Math.hypot(bounds.width, bounds.height) * 0.43));
+          const targetDepth = Math.min(1, distanceFromCenter / portraitRadius);
           // Opening positions are fully independent from the portrait. This
           // guarantees the first frame is only a field of sand; the subject
           // exists visually only after the grains travel to their targets.
@@ -268,13 +280,13 @@ export default function Home() {
             targetY,
             startX,
             startY,
-            size: isFaceZone ? 0.15 + Math.random() * 0.38 : 0.2 + Math.random() * 0.5,
+            size: (isFaceZone ? 0.15 + Math.random() * 0.38 : 0.2 + Math.random() * 0.5) * grainScale,
             alpha: Math.min(1, Math.max(0.035, brightness / (isFaceZone ? 145 : 155))),
-            drift: 10 + Math.random() * 28 + distanceFromCenter * 0.012,
+            drift: (10 + Math.random() * 28 + distanceFromCenter * 0.012) * grainScale,
             phase: Math.random() * Math.PI * 2,
             delay,
             arrival: Math.min(0.98, delay + 0.46 + Math.random() * 0.2),
-            tail: isFaceZone || Math.random() > 0.16 ? 0 : 7 + Math.random() * 17,
+            tail: isFaceZone || Math.random() > 0.16 ? 0 : (7 + Math.random() * 17) * grainScale,
           };
 
           const isUpperBody = normalizedY < 0.58;
@@ -359,6 +371,10 @@ export default function Home() {
       window.clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(buildParticles, 180);
     };
+    const resizeObserver = typeof ResizeObserver === "undefined"
+      ? null
+      : new ResizeObserver(onResize);
+    resizeObserver?.observe(canvas);
     const onParticleScroll = () => {
       if (particleFrame) return;
       particleFrame = requestAnimationFrame(() => {
@@ -373,6 +389,7 @@ export default function Home() {
       disposed = true;
       cancelAnimationFrame(particleFrame);
       window.clearTimeout(resizeTimer);
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", onParticleScroll);
     };

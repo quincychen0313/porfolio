@@ -410,7 +410,7 @@ a {
   grid-row: 1;
   left: 4vw;
   top: 0;
-  width: min(50vw, 720px);
+  width: min(50vw, 82svh, 820px);
   height: 100svh;
   overflow: hidden;
   pointer-events: none;
@@ -577,7 +577,8 @@ a {
   pointer-events: none;
 }
 .story-pet-sprite {
-  width: clamp(264px, 28.8vw, 444px);
+  width: clamp(300px, min(38vw, 64svh), 680px);
+  max-width: 92%;
   aspect-ratio: 192 / 208;
   background-image: url("/vision-mate-spritesheet.webp");
   background-repeat: no-repeat;
@@ -655,7 +656,7 @@ a {
 .work-stage {
   position: relative;
   width: 100%;
-  height: min(65vw, 760px);
+  height: clamp(500px, min(70vw, 82svh), 880px);
   margin-top: 7vh;
   display: grid;
   place-items: center;
@@ -677,7 +678,8 @@ a {
   }
 }
 .work-image-shell {
-  width: min(42vw, 650px);
+  width: clamp(300px, min(44vw, 68svh), 720px);
+  max-width: 92vw;
   aspect-ratio: 1;
   border-radius: 45% 45% 49% 49% / 26% 26% 50% 50%;
   overflow: hidden;
@@ -888,7 +890,7 @@ a {
   }
   .cloud-wrap {
     left: -16vw;
-    width: 88vw;
+    width: min(92vw, 76svh);
     opacity: .48;
   }
   .cloud-wrap::after {
@@ -928,7 +930,7 @@ a {
     width: min(680px, 75vw);
   }
   .story-pet-sprite {
-    width: clamp(228px, 50.4vw, 348px);
+    width: clamp(260px, min(62vw, 52svh), 520px);
   }
   .section-heading {
     padding-top: 11vh;
@@ -941,7 +943,7 @@ a {
     width: 70vw;
   }
   .work-image-shell {
-    width: 67vw;
+    width: clamp(280px, min(72vw, 58svh), 600px);
   }
   .work-caption {
     left: -5vw;
@@ -1002,11 +1004,14 @@ a {
     font-size: 18px;
   }
   .work-stage {
-    height: 92vw;
+    height: clamp(380px, min(92vw, 75svh), 760px);
     margin-top: 8vh;
   }
   .work-image-shell {
-    width: 84vw;
+    width: min(84vw, 60svh);
+  }
+  .story-pet-sprite {
+    width: clamp(240px, min(68vw, 46svh), 360px);
   }
   .work-caption {
     left: -2vw;
