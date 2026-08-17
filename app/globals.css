@@ -570,15 +570,17 @@ a {
 .story-pet-stage {
   grid-column: 1;
   grid-row: 1 / span 2;
-  min-height: 100%;
+  min-height: clamp(420px, 42vw, 520px);
   display: grid;
   place-items: center;
   overflow: hidden;
   pointer-events: none;
 }
 .story-pet-sprite {
-  width: clamp(300px, 38vw, 680px);
+  width: min(38vw, 444px);
   max-width: 92%;
+  height: auto;
+  flex: none;
   aspect-ratio: 192 / 208;
   background-image: url("/vision-mate-spritesheet.webp");
   background-repeat: no-repeat;
@@ -926,11 +928,11 @@ a {
   .story-pet-stage {
     grid-column: 1;
     grid-row: auto;
-    min-height: 44vh;
+    min-height: clamp(300px, 68vw, 400px);
     width: min(680px, 75vw);
   }
   .story-pet-sprite {
-    width: clamp(260px, 62vw, 520px);
+    width: min(62vw, 348px);
   }
   .section-heading {
     padding-top: 11vh;
@@ -1011,7 +1013,10 @@ a {
     width: 84vw;
   }
   .story-pet-sprite {
-    width: clamp(240px, 68vw, 360px);
+    width: min(68vw, 320px);
+  }
+  .story-pet-stage {
+    min-height: clamp(280px, 74vw, 360px);
   }
   .work-caption {
     left: -2vw;
