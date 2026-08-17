@@ -219,7 +219,12 @@ export default function Home() {
       const isMobile = window.innerWidth < 700;
       const sampleWidth = isMobile ? 420 : 680;
       const sampleHeight = Math.round(sampleWidth * (image.naturalHeight / image.naturalWidth));
-      const portraitScale = Math.min(bounds.width / sampleWidth, bounds.height / sampleHeight);
+      // Keep the subject's proportions stable in short browser windows. Once
+      // the viewport is shorter than this visual baseline, the portrait is
+      // cropped vertically instead of being scaled down or squashed.
+      const minimumPortraitHeight = isMobile ? 700 : 900;
+      const availablePortraitHeight = Math.max(bounds.height, minimumPortraitHeight);
+      const portraitScale = Math.min(bounds.width / sampleWidth, availablePortraitHeight / sampleHeight);
       const portraitWidth = sampleWidth * portraitScale;
       const portraitHeight = sampleHeight * portraitScale;
       const portraitOffsetX = (bounds.width - portraitWidth) * 0.5;
