@@ -15,8 +15,12 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  build:
+  deploy:
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -37,14 +41,21 @@ jobs:
       - name: Build site
         run: npm run build
 
-      - name: Prepare static Pages site
+      - name: Prepare static site
         env:
           PAGES_BASE_PATH: ${{ steps.pages.outputs.base_path }}
         run: |
           mkdir -p _site
           cp -R dist/client/. _site/
-          npm run start -- --port 3002 > /tmp/quincy-pages-server.log 2>&1 &
-          server_pid=$!
-          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
-          for attempt in {1..30}; do
-            if curl --fail --silent http
+          npm run start -- --port 3002 > /tmp/site.log 2>&1 &
+          curl --retry 30 --retry-all-errors --retry-delay 1 -fsS http://127.0.0.1:3002/ -o _site/index.html
+          node scripts/prepare-github-pages.mjs _site "$PAGES_BASE_PATH"
+
+      - name: Upload site
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+
+      - name: Deploy site
+        id: deployment
+        uses: actions/deploy-pages@v4
