@@ -217,7 +217,10 @@ export default function Home() {
       context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 
       const isMobile = window.innerWidth < 700;
-      const sampleWidth = isMobile ? 420 : 680;
+      // Sample close to the source image's native resolution so facial
+      // features, fabric folds, hands, and accessories survive the particle
+      // conversion instead of being averaged into larger blocks.
+      const sampleWidth = isMobile ? 520 : 860;
       const sampleHeight = Math.round(sampleWidth * (image.naturalHeight / image.naturalWidth));
       // Keep the subject's proportions stable in short browser windows. Once
       // the viewport is shorter than this visual baseline, the portrait is
@@ -235,7 +238,7 @@ export default function Home() {
       sampleCanvas.height = sampleHeight;
       const sampleContext = sampleCanvas.getContext("2d", { willReadFrequently: true });
       if (!sampleContext) return;
-      sampleContext.filter = "grayscale(1) contrast(1.32) brightness(1.06)";
+      sampleContext.filter = "grayscale(1) contrast(1.18) brightness(1.12)";
       sampleContext.drawImage(image, 0, 0, sampleWidth, sampleHeight);
       const pixels = sampleContext.getImageData(0, 0, sampleWidth, sampleHeight).data;
       const upperBodyCandidates: SandParticle[] = [];
@@ -244,9 +247,9 @@ export default function Home() {
       const centerX = portraitOffsetX + portraitWidth * 0.5;
       const centerY = portraitOffsetY + portraitHeight * 0.5;
       const portraitRadius = Math.hypot(portraitWidth, portraitHeight) * 0.43;
-      const maxUpperBodyParticles = isMobile ? 3800 : 12000;
-      const maxLowerBodyParticles = isMobile ? 3200 : 8500;
-      const maxFaceParticles = isMobile ? 6200 : 14000;
+      const maxUpperBodyParticles = isMobile ? 7000 : 17000;
+      const maxLowerBodyParticles = isMobile ? 5500 : 12000;
+      const maxFaceParticles = isMobile ? 9000 : 18000;
       let acceptedUpperBodyCandidates = 0;
       let acceptedLowerBodyCandidates = 0;
       let acceptedFaceCandidates = 0;
@@ -257,12 +260,15 @@ export default function Home() {
           const brightness = (pixels[pixelIndex] + pixels[pixelIndex + 1] + pixels[pixelIndex + 2]) / 3;
           const normalizedX = x / sampleWidth;
           const normalizedY = y / sampleHeight;
-          const isFaceZone = normalizedY > 0.052 && normalizedY < 0.245 && normalizedX > 0.32 && normalizedX < 0.68;
+          const isFaceZone = normalizedY > 0.045 && normalizedY < 0.265 && normalizedX > 0.29 && normalizedX < 0.71;
+          const isHandZone = normalizedY > 0.335 && normalizedY < 0.49
+            && ((normalizedX > 0.2 && normalizedX < 0.45) || (normalizedX > 0.55 && normalizedX < 0.8));
+          const isFineDetailZone = isFaceZone || isHandZone;
           const isBodyDetailZone = normalizedY < 0.97 && normalizedX > 0.1 && normalizedX < 0.9;
-          const samplingFloor = isFaceZone ? 1 : isBodyDetailZone ? 0.74 : 0.16;
-          const samplingDivisor = isFaceZone ? 62 : isBodyDetailZone ? 78 : 128;
+          const samplingFloor = isFineDetailZone ? 0.96 : isBodyDetailZone ? 0.82 : 0.2;
+          const samplingDivisor = isFineDetailZone ? 68 : isBodyDetailZone ? 82 : 128;
           const samplingChance = Math.min(0.995, Math.max(samplingFloor, brightness / samplingDivisor));
-          if (brightness < (isFaceZone ? 3 : 5) || Math.random() > samplingChance) continue;
+          if (brightness < (isFineDetailZone ? 2 : 4) || Math.random() > samplingChance) continue;
 
           const targetX = portraitOffsetX + normalizedX * portraitWidth;
           const targetY = portraitOffsetY + normalizedY * portraitHeight;
@@ -285,8 +291,8 @@ export default function Home() {
             targetY,
             startX,
             startY,
-            size: (isFaceZone ? 0.15 + Math.random() * 0.38 : 0.2 + Math.random() * 0.5) * grainScale,
-            alpha: Math.min(1, Math.max(0.035, brightness / (isFaceZone ? 145 : 155))),
+            size: (isFineDetailZone ? 0.11 + Math.random() * 0.3 : 0.15 + Math.random() * 0.42) * grainScale,
+            alpha: Math.min(1, Math.max(isFineDetailZone ? 0.085 : 0.05, brightness / (isFineDetailZone ? 132 : 145))),
             drift: (10 + Math.random() * 28 + distanceFromCenter * 0.012) * grainScale,
             phase: Math.random() * Math.PI * 2,
             delay,
