@@ -249,7 +249,7 @@ export default function Home() {
       const portraitRadius = Math.hypot(portraitWidth, portraitHeight) * 0.43;
       const maxUpperBodyParticles = isMobile ? 7000 : 17000;
       const maxLowerBodyParticles = isMobile ? 5500 : 12000;
-      const maxFaceParticles = isMobile ? 9000 : 18000;
+      const maxFaceParticles = 29000;
       let acceptedUpperBodyCandidates = 0;
       let acceptedLowerBodyCandidates = 0;
       let acceptedFaceCandidates = 0;
