@@ -130,6 +130,17 @@ const content = {
   },
 } as const;
 
+function QVisionSparkIcon() {
+  return (
+    <svg viewBox="0 0 48 48" aria-hidden="true">
+      <path
+        d="M24 3c1.8 12 8.2 18.2 21 21-12.8 2.8-19.2 9-21 21-1.8-12-8.2-18.2-21-21C15.8 21.2 22.2 15 24 3Z"
+        fill="currentColor"
+      />
+    </svg>
+  );
+}
+
 export default function Home() {
   const [language, setLanguage] = useState<Language>("en");
   const [progress, setProgress] = useState(0);
@@ -138,6 +149,7 @@ export default function Home() {
   const [heroTextProgress, setHeroTextProgress] = useState(0);
   const [heroExit, setHeroExit] = useState(0);
   const [petWaving, setPetWaving] = useState(false);
+  const [qVisionIntroPhase, setQVisionIntroPhase] = useState<"playing" | "leaving" | "done">("playing");
   const raf = useRef<number | null>(null);
   const particleCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const storyPetRef = useRef<HTMLDivElement | null>(null);
@@ -157,6 +169,32 @@ export default function Home() {
   }, [language]);
 
   useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    document.body.style.overflow = "hidden";
+    window.scrollTo(0, 0);
+
+    const leaveIntro = window.setTimeout(
+      () => setQVisionIntroPhase("leaving"),
+      reducedMotion ? 220 : 2250,
+    );
+    const finishIntro = window.setTimeout(
+      () => {
+        setQVisionIntroPhase("done");
+        document.body.style.overflow = previousOverflow;
+      },
+      reducedMotion ? 360 : 2950,
+    );
+
+    return () => {
+      window.clearTimeout(leaveIntro);
+      window.clearTimeout(finishIntro);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (qVisionIntroPhase !== "done") return;
     if ("scrollRestoration" in window.history) window.history.scrollRestoration = "manual";
     window.scrollTo(0, 0);
     const controlsIn = window.setTimeout(() => setIntroStep(1), 100);
@@ -190,7 +228,7 @@ export default function Home() {
       window.removeEventListener("resize", onScroll);
       if (raf.current !== null) cancelAnimationFrame(raf.current);
     };
-  }, []);
+  }, [qVisionIntroPhase]);
 
   useEffect(() => {
     const canvas = particleCanvasRef.current;
@@ -440,6 +478,20 @@ export default function Home() {
 
   return (
     <main className={`portfolio intro-step-${introStep}`} style={{ "--page-progress": progress } as React.CSSProperties}>
+      {qVisionIntroPhase !== "done" && (
+        <div
+          className={`qvision-intro${qVisionIntroPhase === "leaving" ? " is-leaving" : ""}`}
+          aria-hidden="true"
+        >
+          <div className="qvision-intro-flare" />
+          <div className="qvision-intro-brand">
+            <span className="qvision-intro-symbol"><QVisionSparkIcon /></span>
+            <span className="qvision-intro-word">qVsion</span>
+          </div>
+          <div className="qvision-intro-line"><i /></div>
+          <span className="qvision-intro-caption">AI CREATIVE STUDIO</span>
+        </div>
+      )}
       <div className="screen-lines" aria-hidden="true" />
       <div className="intro-scan" aria-hidden="true" />
       <div className="progress-track" aria-hidden="true">
